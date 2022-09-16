@@ -44,8 +44,6 @@ PODS:
   - flutter_callkit_incoming (0.0.1):
     - CryptoSwift
     - Flutter
-  - flutter_incoming_call (0.0.1):
-    - Flutter
   - flutter_webrtc (0.9.4):
     - Flutter
     - WebRTC-SDK (= 104.5112.02)
@@ -86,7 +84,6 @@ DEPENDENCIES:
   - firebase_messaging (from `.symlinks/plugins/firebase_messaging/ios`)
   - Flutter (from `Flutter`)
   - flutter_callkit_incoming (from `.symlinks/plugins/flutter_callkit_incoming/ios`)
-  - flutter_incoming_call (from `.symlinks/plugins/flutter_incoming_call/ios`)
   - flutter_webrtc (from `.symlinks/plugins/flutter_webrtc/ios`)
   - path_provider_ios (from `.symlinks/plugins/path_provider_ios/ios`)
 
@@ -116,8 +113,6 @@ EXTERNAL SOURCES:
     :path: Flutter
   flutter_callkit_incoming:
     :path: ".symlinks/plugins/flutter_callkit_incoming/ios"
-  flutter_incoming_call:
-    :path: ".symlinks/plugins/flutter_incoming_call/ios"
   flutter_webrtc:
     :path: ".symlinks/plugins/flutter_webrtc/ios"
   path_provider_ios:
@@ -136,7 +131,6 @@ SPEC CHECKSUMS:
   FirebaseMessaging: 732623518591384f61c287e3d8f65294beb7ffb3
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_callkit_incoming: 417dd1b46541cdd5d855ad795ccbe97d1c18155e
-  flutter_incoming_call: d0df2dcc8d98c223fc2082be72a8750a2593283f
   flutter_webrtc: aa130dfe1eca6625c2e2e51ce830abb495bdb06e
   GoogleDataTransport: 1c8145da7117bd68bbbed00cf304edb6a24de00f
   GoogleUtilities: e0913149f6b0625b553d70dae12b49fc62914fd1
@@ -145,6 +139,6 @@ SPEC CHECKSUMS:
   PromisesObjC: ab77feca74fa2823e7af4249b8326368e61014cb
   WebRTC-SDK: e0589abeb63db07a4ca1f45c82ba0f1a72e61622
 
-PODFILE CHECKSUM: 7368163408c647b7eb699d0d788ba6718e18fb8d
+PODFILE CHECKSUM: 4e8f8b2be68aeea4c0d5beb6ff1e79fface1d048
 
 COCOAPODS: 1.11.2
