@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:untitled/in_coming.dart';
-import 'package:untitled/in_coming_custom.dart';
 import 'package:untitled/test01.dart';
 
 import 'dart:core';
@@ -140,15 +139,7 @@ class _MyAppState extends State<MyApp> {
               MaterialPageRoute(builder: (BuildContext context) => InComing()),
             );
           }),
-      RouteItem(
-          title: 'inComing_custom',
-          push: (BuildContext context) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (BuildContext context) => InComingCustom()),
-            );
-          }),
+
     ];
   }
 }
