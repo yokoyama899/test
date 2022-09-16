@@ -199,6 +199,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       // NavigationService.instance
       //     .pushNamedIfNotCurrent(AppRoute.callingPage, args: currentCall);
 
+      await FlutterCallkitIncoming.endCall(currentCall);
     }
   }
 
