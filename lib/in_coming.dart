@@ -1,218 +1,214 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_declarations, sort_child_properties_last, library_private_types_in_public_api, use_key_in_widget_constructors
+// ignore_for_file: avoid_print, prefer_typing_uninitialized_variables
 
-import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'dart:async';
-
-import 'package:flutter_incoming_call/flutter_incoming_call.dart';
+// import 'dart:convert';
 import 'package:uuid/uuid.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 
-
-class InComing extends StatefulWidget {
-  @override
-  _InComingState createState() => _InComingState();
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print("start ---------------------------------------------------");
+  print("Handling a background message: ${message.messageId}");
+  print("--------------------------------------------------- end");
+  showCallkitIncoming(const Uuid().v4());
 }
 
-class _InComingState extends State<InComing> {
-  var uuid = Uuid();
+Future<void> showCallkitIncoming(String uuid) async {
+  var params = <String, dynamic>{
+    'id': uuid,
+    'nameCaller': 'Hien Nguyen',
+    'appName': 'Callkit',
+    'avatar': 'https://i.pravatar.cc/100',
+    'handle': '0123456789',
+    'type': 0,
+    'duration': 30000,
+    'textAccept': 'Accept',
+    'textDecline': 'Decline',
+    'textMissedCall': 'Missed call',
+    'textCallback': 'Call back',
+    'extra': <String, dynamic>{'userId': '1a2b3c4d'},
+    'headers': <String, dynamic>{'apiKey': 'Abc@123!', 'platform': 'flutter'},
+    'android': <String, dynamic>{
+      'isCustomNotification': true,
+      'isShowLogo': false,
+      'isShowCallback': false,
+      'ringtonePath': 'system_ringtone_default',
+      'backgroundColor': '#0955fa',
+      'backgroundUrl': 'https://i.pravatar.cc/500',
+      'actionColor': '#4CAF50'
+    },
+    'ios': <String, dynamic>{
+      'iconName': 'CallKitLogo',
+      'handleType': '',
+      'supportsVideo': true,
+      'maximumCallGroups': 2,
+      'maximumCallsPerCallGroup': 1,
+      'audioSessionMode': 'default',
+      'audioSessionActive': true,
+      'audioSessionPreferredSampleRate': 44100.0,
+      'audioSessionPreferredIOBufferDuration': 0.005,
+      'supportsDTMF': true,
+      'supportsHolding': true,
+      'supportsGrouping': false,
+      'supportsUngrouping': false,
+      'ringtonePath': 'system_ringtone_default'
+    }
+  };
+  await FlutterCallkitIncoming.showCallkitIncoming(params);
+}
 
-  BaseCallEvent? _lastEvent;
-  CallEvent? _lastCallEvent;
-  HoldEvent? _lastHoldEvent;
-  MuteEvent? _lastMuteEvent;
-  DmtfEvent? _lastDmtfEvent;
-  AudioSessionEvent? _lastAudioSessionEvent;
+class Hogeeeeeeee {
+  late Uuid _uuid;
+  var _currentUuid;
 
-  void _incomingCall() {
-    final uid = uuid.v4();
-    final name = 'Daenerys Targaryen';
-    final avatar =
-        'https://scontent.fhel6-1.fna.fbcdn.net/v/t1.0-9/62009611_2487704877929752_6506356917743386624_n.jpg?_nc_cat=102&_nc_sid=09cbfe&_nc_ohc=cIgJjOYlVj0AX_J7pnl&_nc_ht=scontent.fhel6-1.fna&oh=ef2b213b74bd6999cd74e3d5de235cf4&oe=5F6E3331';
-    final handle = 'example_incoming_call';
-    final type = HandleType.generic;
-    final isVideo = true;
-    FlutterIncomingCall.displayIncomingCall(
-        uid, name, avatar, handle, type, isVideo);
+  late final FirebaseMessaging _firebaseMessaging;
+
+  void init() async {
+    _uuid = const Uuid();
+    await initFirebase();
+    // WidgetsBinding.instance.addObserver(this);
+    //Check call when open app from terminated
+    await checkAndNavigationCallingPage();
   }
 
-  void _endCurrentCall() {
-    if (_lastEvent != null) {
-      FlutterIncomingCall.endCall(_lastCallEvent!.uuid);
+  getCurrentCall() async {
+    //check current call from pushkit if possible
+    var calls = await FlutterCallkitIncoming.activeCalls();
+    if (calls is List) {
+      if (calls.isNotEmpty) {
+        print('DATA: $calls');
+        _currentUuid = calls[0]['id'];
+        return calls[0];
+      } else {
+        _currentUuid = "";
+        return null;
+      }
     }
   }
 
-  void _endAllCalls() {
-    FlutterIncomingCall.endAllCalls();
+  checkAndNavigationCallingPage() async {
+    var currentCall = await getCurrentCall();
+    //ここから着信処理
+    print(
+        "checkAndNavigationCallingPage ---------------------------------------------------");
+    print(currentCall);
+    print("--------------------------------------------------- end");
+    if (currentCall != null) {
+      // NavigationService.instance
+      //     .pushNamedIfNotCurrent(AppRoute.callingPage, args: currentCall);
+
+      //ここから着信処理
+      print("start ---------------------------------------------------");
+      print(currentCall);
+      print("--------------------------------------------------- end");
+    }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    FlutterIncomingCall.configure(
-        appName: 'example_incoming_call',
-        duration: 30000,
-        android: ConfigAndroid(
-          vibration: true,
-          ringtonePath: 'default',
-          channelId: 'calls',
-          channelName: 'Calls channel name',
-          channelDescription: 'Calls channel description',
-        ),
-        ios: ConfigIOS(
-          iconName: 'AppIcon40x40',
-          ringtonePath: null,
-          includesCallsInRecents: false,
-          supportsVideo: true,
-          maximumCallGroups: 2,
-          maximumCallsPerCallGroup: 1,
-        ));
-    FlutterIncomingCall.onEvent.listen((event) {
-      setState(() {
-        _lastEvent = event;
-      });
-      if (event is CallEvent) {
-        setState(() {
-          _lastCallEvent = event;
-        });
-      } else if (event is HoldEvent) {
-        setState(() {
-          _lastHoldEvent = event;
-        });
-      } else if (event is MuteEvent) {
-        setState(() {
-          _lastMuteEvent = event;
-        });
-      } else if (event is DmtfEvent) {
-        setState(() {
-          _lastDmtfEvent = event;
-        });
-      } else if (event is AudioSessionEvent) {
-        setState(() {
-          _lastAudioSessionEvent = event;
-        });
-      }
+  initFirebase() async {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    _firebaseMessaging = FirebaseMessaging.instance;
+
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      print(
+          'Message title: ${message.notification?.title}, body: ${message.notification?.body}, data: ${message.data}');
+      _currentUuid = _uuid.v4();
+      showCallkitIncoming(_currentUuid);
+    });
+    _firebaseMessaging.getToken().then((token) {
+      print('Device Token FCM: $token');
     });
   }
 
-  @override
-  void dispose() {
-    _endAllCalls();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Plugin example app'),
-        ),
-        body: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              TextButton(
-                child: Text('Incoming call now'),
-                onPressed: _incomingCall,
-              ),
-              SizedBox(height: 16),
-              TextButton(
-                child: Text('Incoming call delay 5 sec'),
-                onPressed: () =>
-                    Future.delayed(Duration(seconds: 5), _incomingCall),
-              ),
-              SizedBox(height: 16),
-              TextButton(
-                child: Text('End current call'),
-                onPressed: _endCurrentCall,
-              ),
-              SizedBox(height: 16),
-              TextButton(
-                child: Text('End all calls'),
-                onPressed: _endAllCalls,
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Last event:',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                _lastEvent != null ? _lastEvent.toString() : 'Not event',
-                style: TextStyle(fontSize: 16),
-              ),
-              if (_lastCallEvent != null) ...[
-                Text(
-                  'Last call event:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  _lastCallEvent.toString(),
-                  style: TextStyle(fontSize: 16),
-                )
-              ],
-              if (_lastHoldEvent != null) ...[
-                Text(
-                  'Last hold event:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  _lastHoldEvent.toString(),
-                  style: TextStyle(fontSize: 16),
-                )
-              ],
-              if (_lastMuteEvent != null) ...[
-                Text(
-                  'Last mute event:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  _lastMuteEvent.toString(),
-                  style: TextStyle(fontSize: 16),
-                )
-              ],
-              if (_lastDmtfEvent != null) ...[
-                Text(
-                  'Last dmtf event:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  _lastDmtfEvent.toString(),
-                  style: TextStyle(fontSize: 16),
-                )
-              ],
-              if (_lastAudioSessionEvent != null) ...[
-                Text(
-                  'Last audio session event:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  _lastAudioSessionEvent.toString(),
-                  style: TextStyle(fontSize: 16),
-                )
-              ]
-            ],
-          ),
-        ),
-      ),
-    );
+  Future<void> getDevicePushTokenVoIP() async {
+    var devicePushTokenVoIP =
+        await FlutterCallkitIncoming.getDevicePushTokenVoIP();
+    print('*****   devicePushTokenVoIP  :     $devicePushTokenVoIP');
   }
 }
+
+// class MyApp extends StatefulWidget {
+//   @override
+//   _MyAppState createState() => _MyAppState();
+// }
+
+// class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+//   var _uuid;
+//   var _currentUuid;
+
+//   late final FirebaseMessaging _firebaseMessaging;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _uuid = Uuid();
+//     initFirebase();
+//     WidgetsBinding.instance.addObserver(this);
+//     //Check call when open app from terminated
+//     checkAndNavigationCallingPage();
+//   }
+
+//   getCurrentCall() async {
+//     //check current call from pushkit if possible
+//     var calls = await FlutterCallkitIncoming.activeCalls();
+//     if (calls is List) {
+//       if (calls.isNotEmpty) {
+//         print('DATA: $calls');
+//         this._currentUuid = calls[0]['id'];
+//         return calls[0];
+//       } else {
+//         this._currentUuid = "";
+//         return null;
+//       }
+//     }
+//   }
+
+//   checkAndNavigationCallingPage() async {
+//     var currentCall = await getCurrentCall();
+//     if (currentCall != null) {
+//       // NavigationService.instance
+//       //     .pushNamedIfNotCurrent(AppRoute.callingPage, args: currentCall);
+//     }
+//   }
+
+//   @override
+//   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
+//     print(state);
+//     if (state == AppLifecycleState.resumed) {
+//       //Check call when open app from background
+//       checkAndNavigationCallingPage();
+//     }
+//   }
+
+//   @override
+//   void dispose() {
+//     WidgetsBinding.instance.removeObserver(this);
+//     super.dispose();
+//   }
+
+//   initFirebase() async {
+//     await Firebase.initializeApp();
+//     _firebaseMessaging = FirebaseMessaging.instance;
+//     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+//     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+//       print(
+//           'Message title: ${message.notification?.title}, body: ${message.notification?.body}, data: ${message.data}');
+//       this._currentUuid = _uuid.v4();
+//       showCallkitIncoming(this._currentUuid);
+//     });
+//     _firebaseMessaging.getToken().then((token) {
+//       print('Device Token FCM: $token');
+//     });
+//   }
+
+//   Future<void> getDevicePushTokenVoIP() async {
+//     var devicePushTokenVoIP =
+//         await FlutterCallkitIncoming.getDevicePushTokenVoIP();
+//     print(devicePushTokenVoIP);
+//   }
+// }
