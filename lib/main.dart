@@ -1,7 +1,8 @@
-// ignore_for_file: prefer_const_constructors, use_key_in_widget_constructors, library_private_types_in_public_api, avoid_print, prefer_typing_uninitialized_variables
+// ignore_for_file: prefer_const_constructors, use_key_in_widget_constructors, library_private_types_in_public_api, avoid_print, prefer_typing_uninitialized_variables, library_prefixes
 
 import 'package:flutter/material.dart';
-import 'package:untitled/test01.dart';
+
+import 'package:agora_uikit/agora_uikit.dart';
 
 import 'dart:core';
 
@@ -9,9 +10,6 @@ import 'dart:core';
 //     show debugDefaultTargetPlatformOverride;
 import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import 'package:untitled/test02.dart';
-import 'package:untitled/test04.dart';
-import 'package:untitled/test05.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -20,6 +18,21 @@ import 'package:uuid/uuid.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 
+// import 'dart:async';
+
+import 'package:agora_rtc_engine/rtc_engine.dart';
+import 'package:agora_rtc_engine/rtc_local_view.dart' as RtcLocalView;
+import 'package:agora_rtc_engine/rtc_remote_view.dart' as RtcRemoteView;
+
+const appId = "1a2ea8f7a5c04b0a88116183654bb71c";
+const token =
+    "007eJxTYFCuYu9NST3S1SftYcVv5nJ+5vWbjhumXn2yy8VgYfDiG1wKDIaJRqmJFmnmiabJBiZJBokWFoaGZoYWxmamJklJ5obJUnzqybPiNZJ3HbzCxMgAgSA+C0NpXnY+AwMAAFwfjA==";
+const channel = "unko";
+// const channel =
+//     "253Aed56e161f6c1c5f364b630c7de4c50a0c6b46affe80c75b6310f60ccb538fff9";
+// const channel =
+//     "007eJxTYBCfKD5BXNz5uZXrluxSfyv9/KjvUccCS6d6apceevhKSkSBwTDRKDXRIs080TTZwCTJINHCwtDQzNDC2MzUJCnJ3DA55Kda8mUvjeSZdn6sjAwQCOKzMJTmZeczMAAAiLMeKA==";
+//
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("start ---------------------------------------------------");
   print("Handling a background message: ${message.messageId}");
@@ -101,23 +114,28 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  late List<RouteItem> items;
-
   var _uuid;
   var _currentUuid;
+
+  bool _localUserJoined = false;
+  int? _remoteUid;
+  // RtcStats _stats = RtcStats();
+
+  late RtcEngine _engine;
 
   late final FirebaseMessaging _firebaseMessaging;
 
   @override
   void initState() {
     _uuid = Uuid();
+
     initFirebase();
+    initForAgora();
+
     WidgetsBinding.instance.addObserver(this);
-    //Check call when open app from terminated
     checkAndNavigationCallingPage();
 
     super.initState();
-    _initItems();
   }
 
   @override
@@ -158,39 +176,94 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     _firebaseMessaging = FirebaseMessaging.instance;
 
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
-      alert: true,
+      alert: false,
       announcement: false,
-      badge: true,
+      badge: false,
       carPlay: false,
       criticalAlert: false,
       provisional: false,
-      sound: true,
+      sound: false,
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
+      // print('User granted permission');
     } else if (settings.authorizationStatus ==
         AuthorizationStatus.provisional) {
-      print('User granted provisional permission');
+      // print('User granted provisional permission');
     } else {
-      print('User declined or has not accepted permission');
+      // print('User declined or has not accepted permission');
     }
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      print(
-          'Message title: ${message.notification?.title}, body: ${message.notification?.body}, data: ${message.data}');
+      // print(
+      //     'Message title: ${message.notification?.title}, body: ${message.notification?.body}, data: ${message.data}');
       _currentUuid = _uuid.v4();
+
+      //コール画面表示
       showCallkitIncoming(_currentUuid);
     });
-    _firebaseMessaging.getToken().then((token) {
-      print('Device Token FCM: $token');
-    });
+
+    // _firebaseMessaging.getToken().then((token) {
+    //   print('Device Token FCM: $token');
+    // });
+  }
+
+  Future<void> initForAgora() async {
+    // retrieve permissions
+    await [Permission.microphone, Permission.camera].request();
+
+    // create the engine for communicating with agora
+    _engine = await RtcEngine.create(appId);
+
+    // set up event handling for the engine
+    _engine.setEventHandler(RtcEngineEventHandler(
+      joinChannelSuccess: (String channel, int uid, int elapsed) {
+        print(
+            '----                  $uid successfully joined channel: $channel ');
+        setState(() {
+          _localUserJoined = true;
+        });
+      },
+      userJoined: (int uid, int elapsed) {
+        print('----                  remote user $uid joined channel');
+        setState(() {
+          _remoteUid = uid;
+        });
+      },
+      userOffline: (int uid, UserOfflineReason reason) {
+        print('----                  remote user $uid left channel');
+        setState(() {
+          _remoteUid = null;
+          _localUserJoined = false;
+        });
+      },
+      leaveChannel: (stats) {
+        print('--                   leaveChannel                      ---');
+        _remoteUid = null;
+        _localUserJoined = false;
+      },
+      // rtcStats: (stats) {
+      //   //updates every two seconds
+      //   print(stats.toJson());
+      //   // if (_showStats) {
+      //   //   setState(() {});
+      //   // }
+      // },
+      error: (err) {
+        print(err);
+      },
+    ));
+    // enable video
+    await _engine.enableVideo();
+
+    // await _engine.joinChannel(token, 'firstchannel', null, 0);
   }
 
   checkAndNavigationCallingPage() async {
     var currentCall = await getCurrentCall();
-    //ここから着信処理
+    //ここから着信処理 着信取る
     print(
         "checkAndNavigationCallingPage ---------------------------------------------------");
     print(currentCall);
@@ -203,101 +276,87 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
   }
 
-  ListBody _buildRow(context, item) {
-    return ListBody(children: <Widget>[
-      ListTile(
-        title: Text(item.title),
-        onTap: () => item.push(context),
-        trailing: Icon(Icons.arrow_right),
-      ),
-      Divider()
-    ]);
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
+        colorSchemeSeed: Colors.cyan,
       ),
       home: Scaffold(
         appBar: AppBar(
-          title: Text('Flutter-WebRTC example'),
+          title: Text('Uid: $_remoteUid'),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.call_end),
+              onPressed: () async {
+                await _engine.disableAudio();
+                await _engine.leaveChannel();
+
+                setState(() {
+                  _remoteUid = null;
+                  _localUserJoined = false;
+                });
+              },
+            ),
+          ],
         ),
-        body: ListView.builder(
-            shrinkWrap: true,
-            padding: const EdgeInsets.all(0.0),
-            itemCount: items.length,
-            itemBuilder: (context, i) {
-              return _buildRow(context, items[i]);
-            }),
+        body: Stack(
+          children: [
+            Center(
+              child: _remoteVideo(),
+            ),
+            if (_localUserJoined)
+              Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                  width: 200,
+                  height: 150,
+                  child: Center(
+                    child: RtcLocalView.SurfaceView(),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        floatingActionButton: _remoteUid == null
+            ? FloatingActionButton.extended(
+                label: Text('Connect'),
+                icon: Icon(Icons.call_sharp),
+                onPressed: () async {
+                  await _engine.joinChannel(token, channel, null, 0);
+                },
+              )
+            : FloatingActionButton.extended(
+                label: Text('Unconnect'),
+                icon: Icon(Icons.call_end),
+                onPressed: () async {
+                  await _engine.disableAudio();
+                  await _engine.leaveChannel();
+
+                  setState(() {
+                    _remoteUid = null;
+                    _localUserJoined = false;
+                  });
+                },
+              ),
       ),
     );
   }
 
-  void _initItems() {
-    items = <RouteItem>[
-      RouteItem(
-          title: 'GetUserMedia',
-          push: (BuildContext context) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (BuildContext context) => GetUserMediaSample()),
-            );
-          }),
-      RouteItem(
-          title: 'GetDisplayMedia',
-          push: (BuildContext context) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (BuildContext context) => GetDisplayMediaSample()),
-            );
-          }),
-      RouteItem(
-          title: 'LoopBack Sample',
-          push: (BuildContext context) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (BuildContext context) => LoopBackSample()),
-            );
-          }),
-      RouteItem(
-          title: 'LoopBack Sample (Unified Tracks)',
-          push: (BuildContext context) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (BuildContext context) => LoopBackSample()),
-            );
-          }),
-      RouteItem(
-          title: 'DataChannelLoopBackSample',
-          push: (BuildContext context) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (BuildContext context) =>
-                      DataChannelLoopBackSample()),
-            );
-          }),
-    ];
+// Display remote user's video
+  Widget _remoteVideo() {
+    if (_remoteUid != null) {
+      return RtcRemoteView.SurfaceView(
+        uid: _remoteUid!,
+        channelId: channel,
+      );
+    } else {
+      return Text(
+        'Please wait for remote user to join',
+        textAlign: TextAlign.center,
+      );
+    }
   }
-}
-
-typedef RouteCallback = void Function(BuildContext context);
-
-class RouteItem {
-  RouteItem({
-    required this.title,
-    this.subtitle,
-    this.push,
-  });
-
-  final String title;
-  final String? subtitle;
-  final RouteCallback? push;
 }
