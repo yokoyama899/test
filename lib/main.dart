@@ -28,8 +28,8 @@ import 'package:agora_rtc_engine/rtc_remote_view.dart' as RtcRemoteView;
 
 const appId = "1a2ea8f7a5c04b0a88116183654bb71c";
 const token =
-    "007eJxTYFCuYu9NST3S1SftYcVv5nJ+5vWbjhumXn2yy8VgYfDiG1wKDIaJRqmJFmnmiabJBiZJBokWFoaGZoYWxmamJklJ5obJUnzqybPiNZJ3HbzCxMgAgSA+C0NpXnY+AwMAAFwfjA==";
-const channel = "unko";
+    "007eJxTYJgl2CItO+HS5D1vvZVb/q7gtpexq/vIvbX6gmf0tVmXD+cqMBgmGqUmWqSZJ5omG5gkGSRaWBgamhlaGJuZmiQlmRsmB9toJl/u1UouesrHwAiFID4LQ0lqcQkDAwBRcSC1";
+const channel = "test";
 // const channel =
 //     "253Aed56e161f6c1c5f364b630c7de4c50a0c6b46affe80c75b6310f60ccb538fff9";
 // const channel =
@@ -363,7 +363,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       '@@@                 response                      @@@');
                   print(response.body);
 
-                  await _engine.joinChannel(response.body, channel, null, 0);
+                  await _engine.joinChannel(token, channel, null, 0);
                 },
               )
             : FloatingActionButton.extended(
