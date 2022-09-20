@@ -18,6 +18,8 @@ import 'package:uuid/uuid.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 
+import 'package:http/http.dart' as http;
+
 // import 'dart:async';
 
 import 'package:agora_rtc_engine/rtc_engine.dart';
@@ -121,6 +123,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   int? _remoteUid;
   // RtcStats _stats = RtcStats();
 
+  String token = 'Non token';
+
   late RtcEngine _engine;
 
   late final FirebaseMessaging _firebaseMessaging;
@@ -223,6 +227,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         print(
             '----                  $uid successfully joined channel: $channel ');
         setState(() {
+          _remoteUid = uid;
           _localUserJoined = true;
         });
       },
@@ -230,6 +235,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         print('----                  remote user $uid joined channel');
         setState(() {
           _remoteUid = uid;
+          _localUserJoined = true;
         });
       },
       userOffline: (int uid, UserOfflineReason reason) {
@@ -291,6 +297,23 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           title: Text('Uid: $_remoteUid'),
           actions: [
             IconButton(
+              icon: Icon(Icons.token),
+              onPressed: () async {
+                // https: //us-central1-tks-notice-stg.cloudfunctions.net/genetateTokenSample
+                var response = await http.post(Uri.https(
+                  'us-central1-tks-notice-stg.cloudfunctions.net',
+                  '/genetateTokenSample',
+                  {
+                    'uid': _remoteUid,
+                    'role': 'publisher',
+                  },
+                ));
+
+                print('@@@                 response                      @@@');
+                print(response.body);
+              },
+            ),
+            IconButton(
               icon: Icon(Icons.call_end),
               onPressed: () async {
                 await _engine.disableAudio();
@@ -327,7 +350,20 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 label: Text('Connect'),
                 icon: Icon(Icons.call_sharp),
                 onPressed: () async {
-                  await _engine.joinChannel(token, channel, null, 0);
+                  var response = await http.post(Uri.https(
+                    'us-central1-tks-notice-stg.cloudfunctions.net',
+                    '/genetateTokenSample',
+                    {
+                      'uid': _remoteUid,
+                      'role': 'publisher',
+                    },
+                  ));
+
+                  print(
+                      '@@@                 response                      @@@');
+                  print(response.body);
+
+                  await _engine.joinChannel(response.body, channel, null, 0);
                 },
               )
             : FloatingActionButton.extended(
