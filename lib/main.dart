@@ -12,6 +12,7 @@ import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:untitled/const.dart';
 import 'firebase_options.dart';
 // import 'dart:convert';
 import 'package:uuid/uuid.dart';
@@ -27,8 +28,8 @@ import 'package:agora_rtc_engine/rtc_local_view.dart' as RtcLocalView;
 import 'package:agora_rtc_engine/rtc_remote_view.dart' as RtcRemoteView;
 
 const appId = "1a2ea8f7a5c04b0a88116183654bb71c";
-const token =
-    "007eJxTYJgl2CItO+HS5D1vvZVb/q7gtpexq/vIvbX6gmf0tVmXD+cqMBgmGqUmWqSZJ5omG5gkGSRaWBgamhlaGJuZmiQlmRsmB9toJl/u1UouesrHwAiFID4LQ0lqcQkDAwBRcSC1";
+// const token =
+//     "007eJxTYJgl2CItO+HS5D1vvZVb/q7gtpexq/vIvbX6gmf0tVmXD+cqMBgmGqUmWqSZJ5omG5gkGSRaWBgamhlaGJuZmiQlmRsmB9toJl/u1UouesrHwAiFID4LQ0lqcQkDAwBRcSC1";
 const channel = "test";
 // const channel =
 //     "253Aed56e161f6c1c5f364b630c7de4c50a0c6b46affe80c75b6310f60ccb538fff9";
@@ -363,7 +364,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       '@@@                 response                      @@@');
                   print(response.body);
 
-                  await _engine.joinChannel(token, channel, null, 0);
+                  await _engine.joinChannel(C_TOKEN, channel, null, 0);
                 },
               )
             : FloatingActionButton.extended(
