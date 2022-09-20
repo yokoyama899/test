@@ -205,9 +205,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       showCallkitIncoming(_currentUuid);
     });
 
-    // _firebaseMessaging.getToken().then((token) {
-    //   print('Device Token FCM: $token');
-    // });
+    _firebaseMessaging.getToken().then((token) {
+      print('Device Token FCM: $token');
+    });
   }
 
   Future<void> initForAgora() async {
@@ -271,6 +271,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     if (currentCall != null) {
       // NavigationService.instance
       //     .pushNamedIfNotCurrent(AppRoute.callingPage, args: currentCall);
+
+      await _engine.joinChannel(token, channel, null, 0);
 
       await FlutterCallkitIncoming.endCall(currentCall);
     }
